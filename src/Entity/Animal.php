@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\AnimalRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AnimalRepository::class)]
@@ -31,11 +33,19 @@ class Animal
     #[ORM\Column(type: 'date', nullable: true)]
     private $ddn;
 
-    #[ORM\ManyToOne(targetEntity: Client::class, inversedBy: 'animals')]
-    private $fkClient;
-
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $description;
+
+    #[ORM\ManyToOne(targetEntity: Refuge::class, inversedBy: 'animals')]
+    private $fkRefuge;
+
+    #[ORM\OneToMany(mappedBy: 'fkAnimal', targetEntity: Commentaire::class)]
+    private $commentaires;
+
+    public function __construct()
+    {
+        $this->commentaires = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -114,18 +124,6 @@ class Animal
         return $this;
     }
 
-    public function getFkClient(): ?Client
-    {
-        return $this->fkClient;
-    }
-
-    public function setFkClient(?Client $fkClient): self
-    {
-        $this->fkClient = $fkClient;
-
-        return $this;
-    }
-
     public function getDescription(): ?string
     {
         return $this->description;
@@ -136,5 +134,52 @@ class Animal
         $this->description = $description;
 
         return $this;
+    }
+
+    public function getFkRefuge(): ?Refuge
+    {
+        return $this->fkRefuge;
+    }
+
+    public function setFkRefuge(?Refuge $fkRefuge): self
+    {
+        $this->fkRefuge = $fkRefuge;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Commentaire>
+     */
+    public function getCommentaires(): Collection
+    {
+        return $this->commentaires;
+    }
+
+    public function addCommentaire(Commentaire $commentaire): self
+    {
+        if (!$this->commentaires->contains($commentaire)) {
+            $this->commentaires[] = $commentaire;
+            $commentaire->setFkAnimal($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommentaire(Commentaire $commentaire): self
+    {
+        if ($this->commentaires->removeElement($commentaire)) {
+            // set the owning side to null (unless already changed)
+            if ($commentaire->getFkAnimal() === $this) {
+                $commentaire->setFkAnimal(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function __toString()
+    {
+        return $this->getNom();
     }
 }
